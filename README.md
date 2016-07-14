@@ -1,3 +1,7 @@
+# NOTICE: Deprecated
+
+This project is deprecated an no longer actively maintained by [Heroku](https://heroku.com/). However there is a fork with Python3 support being maintained by YPlan at [github.com/YPlan/salesforce-bulk](https://github.com/YPlan/salesforce-bulk).
+
 # Salesforce Bulk
 
 Python client library for accessing the asynchronous Salesforce.com Bulk API.
@@ -95,8 +99,3 @@ print "Done. Accounts uploaded."
 
 When creating the job, pass `concurrency=Serial` or `concurrency=Parallel` to set the
 concurrency mode for the job.
-
-
-
-
-
