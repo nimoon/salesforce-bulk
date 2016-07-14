@@ -1,11 +1,15 @@
 import csv
-from cStringIO import StringIO
+from six import BytesIO
+
 
 class CsvDictsAdapter(object):
-    """Provide a DataChange generator and it provides a file-like object which returns csv data"""
+    """Provide a DataChange generator and it provides a file-like object
+       which returns csv data.
+
+    """
     def __init__(self, source_generator):
         self.source = source_generator
-        self.buffer = StringIO()
+        self.buffer = BytesIO()
         self.csv = None
         self.add_header = False
 
