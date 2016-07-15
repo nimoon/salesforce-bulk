@@ -118,7 +118,7 @@ class SalesforceBulk(object):
             import salesforce_oauth_request
         except ImportError:
             raise ImportError(
-                MissingDependencyMessage(dependency='salesforce-oauth-request')
+                MissingDependencyMessage(dependency='salesforce-oauth-request-yplan')
             )
 
         packet = salesforce_oauth_request.login(

@@ -19,7 +19,6 @@ packages = [
 requires = [
     'httplib2>=0.7.5',
     'requests>=2.2.1',
-    'salesforce-oauth-request-yplan>=1.1.0',
 ]
 
 with open('README.rst') as f:
@@ -31,7 +30,7 @@ with open('LICENSE') as f:
 
 setup(
     name='salesforce-bulk-yplan',
-    version='1.2.0',
+    version='1.2.1',
     description='Python interface to the Salesforce.com Bulk API.',
     long_description=readme + "\n\n" + history,
     author='Scott Persinger',

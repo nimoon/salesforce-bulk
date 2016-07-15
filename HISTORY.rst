@@ -3,6 +3,12 @@
 History
 -------
 
+1.2.1 (2016-07-15)
+------------------
+
+* Remove ``salesforce-oauth-request-yplan`` as a hard requirement in ``setup.py`` (to closer match the original).
+
+
 1.2.0 (2016-07-14)
 ------------------
 
