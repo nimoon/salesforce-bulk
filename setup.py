@@ -19,22 +19,26 @@ packages = [
 requires = [
     'httplib2>=0.7.5',
     'requests>=2.2.1',
-    'salesforce-oauth-request==1.0.6',
+    'salesforce-oauth-request-yplan>=1.1.0',
 ]
 
-with open('README.md') as f:
+with open('README.rst') as f:
     readme = f.read()
+with open('HISTORY.rst') as history_file:
+    history = history_file.read().replace('.. :changelog:', '')
 with open('LICENSE') as f:
     license = f.read()
 
 setup(
-    name='salesforce-bulk',
-    version='1.1.0',
+    name='salesforce-bulk-yplan',
+    version='1.2.0',
     description='Python interface to the Salesforce.com Bulk API.',
-    long_description=readme,
+    long_description=readme + "\n\n" + history,
     author='Scott Persinger',
     author_email='scottp@heroku.com',
-    url='https://github.com/heroku/salesforce-bulk',
+    maintainer='YPlan',
+    maintainer_email='julius@yplanapp.com',
+    url='https://github.com/YPlan/salesforce-bulk',
     packages=packages,
     package_data={'': ['LICENSE']},
     include_package_data=True,
@@ -47,7 +51,11 @@ setup(
         'Natural Language :: English',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
     ),
 )
