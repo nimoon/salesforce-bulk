@@ -262,7 +262,8 @@ class SalesforceBulk(object):
         response = requests.post(
             url=uri,
             headers=headers,
-        )
+            data=soql)
+        content = response.content
 
         self.check_status(response, content)
 
@@ -428,6 +429,8 @@ class SalesforceBulk(object):
             job_id=job_id,
             batch_id=batch_id,
         )
+        response = requests.get(url=uri, headers=self.get_headers())
+        content = response.content
         self.check_status(response, content)
 
         tree = ET.fromstring(content)
@@ -565,6 +568,10 @@ class SalesforceBulk(object):
         response = requests.get(uri, headers=self.get_headers(), stream=True)
 
         if parse_csv:
+            # Without iterating response the following issue is raised:
+            # _csv.Error: iterator should return strings, not bytes (did you open the file in text mode?)
+            line_iterator = (x for x in response.iter_lines(chunk_size=2048, decode_unicode=True))
+            return csv.DictReader(line_iterator, delimiter=",", quotechar='"')
         else:
             return response.iter_lines(chunk_size=2048)
 
@@ -575,9 +582,13 @@ class SalesforceBulk(object):
 
         if not self.is_batch_done(job_id, batch_id):
             return False
+        uri = "{endpoint}/job/{job_id}/batch/{batch_id}/result".format(
+            endpoint=self.endpoint,
             job_id=job_id,
             batch_id=batch_id,
         )
+        response = requests.get(url=uri, headers=self.get_headers())
+        content = response.content
 
         if PY3:
             tf = TemporaryFile(mode='w+t', encoding='utf-8')
