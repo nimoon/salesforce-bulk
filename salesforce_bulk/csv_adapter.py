@@ -1,5 +1,5 @@
 import csv
-from six import BytesIO
+from six import advance_iterator, viewkeys, StringIO
 
 
 class CsvDictsAdapter(object):
@@ -9,7 +9,7 @@ class CsvDictsAdapter(object):
     """
     def __init__(self, source_generator):
         self.source = source_generator
-        self.buffer = BytesIO()
+        self.buffer = StringIO()
         self.csv = None
         self.add_header = False
 
@@ -19,14 +19,14 @@ class CsvDictsAdapter(object):
     def write_header(self):
         self.add_header = True
 
-    def next(self):
-        row = self.source.next()
+    def __next__(self):
+        row = advance_iterator(self.source)
 
         self.buffer.truncate(0)
         self.buffer.seek(0)
 
         if not self.csv:
-            self.csv = csv.DictWriter(self.buffer, row.keys(), quoting=csv.QUOTE_NONNUMERIC)
+            self.csv = csv.DictWriter(self.buffer, list(viewkeys(row)), quoting=csv.QUOTE_NONNUMERIC)
             self.add_header = True
         if self.add_header:
             if hasattr(self.csv, 'writeheader'):

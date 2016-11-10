@@ -7,7 +7,7 @@ import re
 import time
 import csv
 from collections import namedtuple
-from httplib2 import Http
+
 from six import PY3, StringIO, BytesIO, text_type
 from six.moves.urllib.parse import urlparse
 from tempfile import TemporaryFile
@@ -59,7 +59,7 @@ class BulkBatchFailed(BulkApiError):
 
 IncompleteCredentialsMessage = (
     "Must supply either sessionId/instance_url or username/password."
-).format
+)
 MissingEnvironmentVariablesMessage = (
     "You must set {missing_vars} to use username/pass login."
 ).format
@@ -74,7 +74,7 @@ class SalesforceBulk(object):
     def __init__(self, sessionId=None, host=None, username=None, password=None,
                  exception_class=BulkApiError, API_version="36.0"):
         if not sessionId and not username:
-            raise RuntimeError(IncompleteCredentialsMessage())
+            raise RuntimeError(IncompleteCredentialsMessage)
 
         if not sessionId:
             sessionId, endpoint = SalesforceBulk.login_to_salesforce(
@@ -110,7 +110,7 @@ class SalesforceBulk(object):
         if missing_env_vars:
             raise RuntimeError(
                 MissingEnvironmentVariablesMessage(
-                    missing_env_vars=', '.join(missing_env_vars)
+                    missing_vars=', '.join(missing_env_vars)
                 )
             )
 
@@ -164,16 +164,11 @@ class SalesforceBulk(object):
             external_id_name=external_id_name,
         )
 
-        http = Http()
-        response, content = http.request(
-            "{self.endpoint}/job".format(self=self),
-            "POST",
-            headers=self.get_headers({
-                # http://salesforce.stackexchange.com/a/49273
-                'SOAPAction': operation,
-            }),
-            body=doc,
-        )
+        response = requests.post(
+            url="{endpoint}/job".format(endpoint=self.endpoint),
+            headers=self.get_headers({'SOAPAction': operation}),
+            data=doc)
+        content = response.content
 
         self.check_status(response, content)
 
@@ -184,35 +179,27 @@ class SalesforceBulk(object):
         return job_id
 
     def check_status(self, response, content):
-        if response.status >= 400:
+        if response.status_code >= 400:
             message = HttpErrorMessage(message=content)
-            self.raise_error(message, response.status)
+            self.raise_error(message, response.status_code)
 
     def close_job(self, job_id):
-        http = Http()
-        response, content = http.request(
-            "{self.endpoint}/job/{job_id}".format(
-                self=self,
-                job_id=job_id,
-            ),
-            "POST",
+        uri = "{self.endpoint}/job/{job_id}".format(self=self, job_id=job_id)
+        response = requests.post(
+            url=uri,
             headers=self.get_headers(),
-            body=self.create_close_job_doc(),
-        )
+            data=self.create_close_job_doc())
+        content = response.content
         self.check_status(response, content)
 
     def abort_job(self, job_id):
         """Abort a given bulk job"""
-        http = Http()
-        response, content = http.request(
-            "{self.endpoint}/job/{job_id}".format(
-                self=self,
-                job_id=job_id,
-            ),
-            "POST",
+        uri = "{self.endpoint}/job/{job_id}".format(self=self, job_id=job_id)
+        response = requests.post(
+            url=uri,
             headers=self.get_headers(),
-            body=self.create_abort_job_doc(),
-        )
+            data=self.create_abort_job_doc())
+        content = response.content
         self.check_status(response, content)
 
     def create_job_doc(self, object_name=None, operation=None,
@@ -267,16 +254,13 @@ class SalesforceBulk(object):
             job_id = self.create_query_job(
                 re.search(re.compile("from (\w+)", re.I), soql).group(1),
             )
-        http = Http()
         uri = "{self.endpoint}/job/{job_id}/batch".format(
             self=self,
             job_id=job_id,
         )
         headers = self.get_headers({"Content-Type": "text/csv"})
-        response, content = http.request(
-            uri,
-            method="POST",
-            body=soql,
+        response = requests.post(
+            url=uri,
             headers=headers,
         )
 
@@ -439,13 +423,11 @@ class SalesforceBulk(object):
 
         job_id = job_id or self.lookup_job_id(batch_id)
 
-        http = Http()
         uri = "{self.endpoint}/job/{job_id}/batch/{batch_id}".format(
             self=self,
             job_id=job_id,
             batch_id=batch_id,
         )
-        response, content = http.request(uri, headers=self.get_headers())
         self.check_status(response, content)
 
         tree = ET.fromstring(content)
@@ -583,8 +565,6 @@ class SalesforceBulk(object):
         response = requests.get(uri, headers=self.get_headers(), stream=True)
 
         if parse_csv:
-            return csv.DictReader(response.iter_lines(chunk_size=2048), delimiter=",",
-                                  quotechar='"')
         else:
             return response.iter_lines(chunk_size=2048)
 
@@ -595,13 +575,9 @@ class SalesforceBulk(object):
 
         if not self.is_batch_done(job_id, batch_id):
             return False
-        http = Http()
-        uri = "{self.endpoint}/job/{job_id}/batch/{batch_id}/result".format(
-            self=self,
             job_id=job_id,
             batch_id=batch_id,
         )
-        response, content = http.request(uri, method="GET", headers=self.get_headers())
 
         if PY3:
             tf = TemporaryFile(mode='w+t', encoding='utf-8')
