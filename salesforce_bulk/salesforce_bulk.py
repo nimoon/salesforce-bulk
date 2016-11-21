@@ -10,11 +10,10 @@ from collections import namedtuple
 
 from six import PY3, StringIO, BytesIO, text_type
 from six.moves.urllib.parse import urlparse
-from tempfile import TemporaryFile
 
 from salesforce_bulk import bulk_states
 
-UploadResult = namedtuple('UploadResult', 'id success created error')
+UploadResult = namedtuple('UploadResult', 'Id Success Created Error')
 
 
 class BulkApiError(Exception):
@@ -588,36 +587,25 @@ class SalesforceBulk(object):
             batch_id=batch_id,
         )
         response = requests.get(url=uri, headers=self.get_headers())
-        content = response.content
 
-        if PY3:
-            tf = TemporaryFile(mode='w+t', encoding='utf-8')
-            tf.write(content.decode('utf-8'))
-        else:
-            tf = TemporaryFile()
-            tf.write(content)
+        line_iterator = (x for x in response.iter_lines(chunk_size=2048, decode_unicode=True))
+        reader = csv.DictReader(line_iterator, delimiter=",", quotechar='"')
+        col_names = reader.fieldnames
 
-        total_remaining = self.count_file_lines(tf)
+        total_remaining = len(list(response.iter_lines())) - 1  # subtract 1 to exclude header
         if logger:
             logger("Total records: %d" % total_remaining)
-        tf.seek(0)
 
         records = []
         line_number = 0
-        col_names = []
-        reader = csv.reader(tf)
         for row in reader:
             line_number += 1
-            records.append(UploadResult(*row))
-            if len(records) == 1:
-                col_names = records[0]
+            records.append(UploadResult(**row))
             if batch_size > 0 and len(records) >= (batch_size + 1):
                 callback(records, total_remaining, line_number)
                 total_remaining -= (len(records) - 1)
                 records = [col_names]
         callback(records, total_remaining, line_number)
-
-        tf.close()
 
         return True
 
