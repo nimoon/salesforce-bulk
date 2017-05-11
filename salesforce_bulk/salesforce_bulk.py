@@ -523,7 +523,9 @@ class SalesforceBulk(object):
         logger('Downloading bulk result file id=#{0}'.format(result_id))
         resp = requests.get(uri, headers=self.get_headers(), stream=True)
 
-        iterator = (text_type(line.decode('utf-8')) if isinstance(line, bytes) else text_type(line) for line in resp.iter_lines())
+        iterator = (
+            text_type(line.decode('utf-8')) if isinstance(line, bytes)
+            else text_type(line) for line in resp.iter_lines())
         if parse_csv:
             iterator = csv.reader(iterator)
 
@@ -572,8 +574,10 @@ class SalesforceBulk(object):
 
         if parse_csv:
             # Without iterating response the following issue is raised:
-            # _csv.Error: iterator should return strings, not bytes (did you open the file in text mode?)
-            line_iterator = (x for x in response.iter_lines(chunk_size=2048, decode_unicode=True))
+            # _csv.Error: iterator should return strings, \
+            # not bytes (did you open the file in text mode?)
+            line_iterator = (x for x in response.iter_lines(
+                chunk_size=2048, decode_unicode=True))
             return csv.DictReader(line_iterator, delimiter=",", quotechar='"')
         else:
             return response.iter_lines(chunk_size=2048)
@@ -592,7 +596,8 @@ class SalesforceBulk(object):
         )
         response = requests.get(url=uri, headers=self.get_headers())
 
-        line_iterator = (x for x in response.iter_lines(chunk_size=2048, decode_unicode=True))
+        line_iterator = (x for x in response.iter_lines(
+            chunk_size=2048, decode_unicode=True))
         reader = csv.DictReader(line_iterator, delimiter=",", quotechar='"')
         col_names = reader.fieldnames
 
