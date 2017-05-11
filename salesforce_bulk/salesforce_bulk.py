@@ -335,7 +335,11 @@ class SalesforceBulk(object):
             job_id=job_id,
         )
         headers = self.get_headers({"Content-Type": "text/csv"})
-        response = requests.post(uri, data=(foo.encode('utf-8') for foo in csv_generator), headers=headers)
+        response = requests.post(
+            uri,
+            data=(foo.encode('utf-8') for foo in csv_generator),
+            headers=headers
+        )
         content = response.content
 
         if response.status_code >= 400:

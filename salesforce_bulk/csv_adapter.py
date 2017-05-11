@@ -26,7 +26,10 @@ class CsvDictsAdapter(object):
         self.buffer.seek(0)
 
         if not self.csv:
-            self.csv = csv.DictWriter(self.buffer, list(viewkeys(row)), quoting=csv.QUOTE_NONNUMERIC)
+            self.csv = csv.DictWriter(
+                self.buffer,
+                list(viewkeys(row)),
+                quoting=csv.QUOTE_NONNUMERIC)
             self.add_header = True
         if self.add_header:
             if hasattr(self.csv, 'writeheader'):
