@@ -23,21 +23,13 @@ class BulkApiError(Exception):
         self.status_code = status_code
 
 
-JobAbortedMessage = "Job {job_id} aborted.".format
-
-
 class BulkJobAborted(BulkApiError):
 
     def __init__(self, job_id):
         self.job_id = job_id
 
-        message = JobAbortedMessage(job_id=job_id)
+        message = "Job {job_id} aborted.".format(job_id=job_id)
         super(BulkJobAborted, self).__init__(message)
-
-
-BatchFailedMessage = (
-    "Batch {batch_id} of job {job_id} failed: '{state_message}'."
-).format
 
 
 class BulkBatchFailed(BulkApiError):
@@ -47,25 +39,13 @@ class BulkBatchFailed(BulkApiError):
         self.batch_id = batch_id
         self.state_message = state_message
 
-        message = BatchFailedMessage(
-            batch_id=batch_id,
-            job_id=job_id,
-            state_message=state_message
-        )
+        message = (
+            "Batch {batch_id} of job {job_id} failed: '{state_message}'.".format(
+                batch_id=batch_id,
+                job_id=job_id,
+                state_message=state_message))
 
         super(BulkBatchFailed, self).__init__(message)
-
-
-IncompleteCredentialsMessage = (
-    "Must supply either sessionId/instance_url or username/password."
-)
-MissingEnvironmentVariablesMessage = (
-    "You must set {missing_vars} to use username/pass login."
-).format
-MissingDependencyMessage = (
-    "You must install {dependency} to use username/password."
-).format
-HttpErrorMessage = "Bulk API HTTP Error result: {message}".format
 
 
 class SalesforceBulk(object):
@@ -73,7 +53,7 @@ class SalesforceBulk(object):
     def __init__(self, sessionId=None, host=None, username=None, password=None,
                  exception_class=BulkApiError, API_version="36.0"):
         if not sessionId and not username:
-            raise RuntimeError(IncompleteCredentialsMessage)
+            raise RuntimeError("Must supply either sessionId/instance_url or username/password.")
 
         if not sessionId:
             sessionId, endpoint = SalesforceBulk.login_to_salesforce(
@@ -108,7 +88,7 @@ class SalesforceBulk(object):
         missing_env_vars = [e for e in env_vars if e not in os.environ]
         if missing_env_vars:
             raise RuntimeError(
-                MissingEnvironmentVariablesMessage(
+                "You must set {missing_vars} to use username/pass login.".format(
                     missing_vars=', '.join(missing_env_vars)
                 )
             )
@@ -117,8 +97,8 @@ class SalesforceBulk(object):
             import salesforce_oauth_request
         except ImportError:
             raise ImportError(
-                MissingDependencyMessage(dependency='salesforce-oauth-request-yplan')
-            )
+                "You must install {dependency} to use username/password.".format(
+                    dependency='salesforce-oauth-request-yplan'))
 
         packet = salesforce_oauth_request.login(
             username=username,
@@ -179,7 +159,8 @@ class SalesforceBulk(object):
 
     def check_status(self, response, content):
         if response.status_code >= 400:
-            message = HttpErrorMessage(message=content)
+            message = "Bulk API HTTP Error result: {message}".format(
+                message=content)
             self.raise_error(message, response.status_code)
 
     def close_job(self, job_id):
